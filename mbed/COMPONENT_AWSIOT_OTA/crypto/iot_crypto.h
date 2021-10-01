@@ -32,6 +32,9 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdio.h>
+#if COMPONENT_AWSIOT_PKCS11PSA
+#include "psa/crypto.h"
+#endif
 
 /**
  * @brief Commonly used buffer sizes for storing cryptographic hash computation
@@ -100,13 +103,45 @@ void CRYPTO_SignatureVerificationUpdate( void * pvContext,
  * @return pdTRUE if the signature is correct or pdFALSE if the signature is invalid.
  */
 bool CRYPTO_SignatureVerificationFinal( void * pvContext,
-                                              char * pcSignerCertificate,
-                                              size_t xSignerCertificateLength,
-                                              uint8_t * pucSignature,
-                                              size_t xSignatureLength );
+                                        const char * pcSignerCertificate,
+                                        size_t xSignerCertificateLength,
+                                        uint8_t * pucSignature,
+                                        size_t xSignatureLength );
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+
+/**
+ * @brief Verifies a digital signature computation using the PKCS11 public key label
+ *
+ * Variant of CRYPTO_SignatureVerificationFinal, all parameters/return code are the
+ * same except:
+ *
+ * @param[in] pcPKCS11PublicKeyLabel        PKCS11 public key label
+ * @param[in] xPKCS11PublicKeyLabelLength   Length in bytes of the PKCS11 public key label
+ */
+bool CRYPTO_SignatureVerificationFinalByPKCS11Label( void * pvContext,
+                                                     const uint8_t * pcPKCS11PublicKeyLabel,
+                                                     size_t xPKCS11PublicKeyLabelLength,
+                                                     uint8_t * pucSignature,
+                                                     size_t xSignatureLength );
+
+/**
+ * @brief Verifies a digital signature computation using the PSA public key ID
+ *
+ * Variant of CRYPTO_SignatureVerificationFinal, all parameters/return code are the
+ * same except:
+ *
+ * @param[in] xPSAPublicKeyId               PSA public key ID
+ */
+bool CRYPTO_SignatureVerificationFinalByPSAKeyId( void * pvContext,
+                                                  psa_key_id_t xPSAPublicKeyId,
+                                                  uint8_t * pucSignature,
+                                                  size_t xSignatureLength );
+
+#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
 
 #ifdef __cplusplus
 }
 #endif
-                           
-#endif /* ifndef __AWS_CRYPTO__H__ */
+
+#endif  /* #ifndef __AWS_CRYPTO__H__ */

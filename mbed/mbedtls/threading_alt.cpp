@@ -19,6 +19,7 @@
 
 #include "mbed.h"
 #include "mbed_trace.h"
+#include "mbedtls/threading.h"
 
 #define TRACE_GROUP     "MbedTLS_Threading"
 

@@ -100,9 +100,15 @@
  *  request is 128/1 = 128 blocks. Configure this parameter to this maximum limit or lower based on
  *  how many data blocks response is expected for each data requests.
  *  @note This must be set larger than zero.
+ *  @note When larger than one, data blocks can send to OTA PAL out of order. This will break some platform
+ *        like Nuvoton's M2354 TF-M, which requires data blocks sent in sequence. Configure to one for
+ *        these platforms.
+ *  @note For PSA platform like Nuvoton's M2354 TF-M, psa_aead_decrypt() (for mbedtls_ssl_read()) memory footprint
+ *        in SPE is proportional to (otaconfigFILE_BLOCK_SIZE * otaconfigMAX_NUM_BLOCKS_REQUEST). Adjust these
+ *        configurations to avoid OOM in SPE.
  *
  */
-#define otaconfigMAX_NUM_BLOCKS_REQUEST         4U //8U
+#define otaconfigMAX_NUM_BLOCKS_REQUEST         1U //8U
 
 /**
  * @brief The maximum number of requests allowed to send without a response before we abort.

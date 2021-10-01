@@ -82,8 +82,8 @@ int32_t Mbed_Tls_Connect( NetworkContext_t * pNetworkContext,
     ctx_->socket->set_hostname(pServerInfo->hostname);
 
     /* Configure root CA into TLSSocket */
-    if (pCredentialInfo && pCredentialInfo->rootCA) {
-        rc = ctx_->socket->set_root_ca_cert(pCredentialInfo->rootCA);
+    if (pCredentialInfo && pCredentialInfo->rootCA && pCredentialInfo->rootCASize) {
+        rc = ctx_->socket->set_root_ca_cert(pCredentialInfo->rootCA, pCredentialInfo->rootCASize);
         if (rc != 0) {
             LogError(("Error: configure root CA into TLSSocket: %d", rc));
             goto cleanup;
@@ -91,11 +91,87 @@ int32_t Mbed_Tls_Connect( NetworkContext_t * pNetworkContext,
     }
 
     /* Configure client certificate/private key into TLSSocket */
-    if (pCredentialInfo && pCredentialInfo->clientCrt && pCredentialInfo->clientKey) {
-        rc = ctx_->socket->set_client_cert_key(pCredentialInfo->clientCrt, pCredentialInfo->clientKey);
-        if (rc != 0) {
-            LogError(("Error: configure client certificate/private key into TLSSocket: %d", rc));
-            goto cleanup;
+    if (pCredentialInfo && pCredentialInfo->clientCrt && pCredentialInfo->clientCrtSize) {
+        bool go_nonopaque = true;
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+        /* Go opaque first and non-opaque as fallback */
+        go_nonopaque = false;
+        bool go_opaque_ok = false;
+
+        /* Un-initialize above client certificate/key for safe */
+        ctx_->UninitClientCrtKey();
+
+        do {
+            /* Initialize crt context and keep it for TLS transport session */
+            mbedtls_x509_crt_init(&ctx_->clientCrt);
+            ctx_->clientCrtInited = true;
+            int rc_mbedtls = mbedtls_x509_crt_parse(&ctx_->clientCrt,
+                                                    (const unsigned char *) (pCredentialInfo->clientCrt),
+                                                    pCredentialInfo->clientCrtSize);
+            if (0 != rc_mbedtls) {
+                LogError(("Error: mbedtls_x509_crt_parse failed: %d", rc_mbedtls));
+                break;
+            }
+
+            if (0 == pCredentialInfo->clientKeyId) {
+                LogError(("Error: Invalid PSA client key ID: 0"));
+                break;
+            }
+
+            /* Acquire PSA client key handle for mbedtls_pk_setup_opaque */
+            psa_status_t rc_psa = psa_open_key(pCredentialInfo->clientKeyId, &ctx_->clientKeyHandle);
+            if (PSA_SUCCESS != rc_psa) {
+                LogError(("Error: psa_open_key(%d) failed: %d", pCredentialInfo->clientKeyId, rc_psa));
+                break;
+            }
+            if (0 == ctx_->clientKeyHandle) {
+                LogError(("Error: PSA client key handle must be non-zero after psa_open_key(%d)", pCredentialInfo->clientKeyId));
+                break;
+            }
+
+            /* Initialize pk context and keep it for TLS transport session */
+            mbedtls_pk_init(&ctx_->clientkeyPKCtx);
+            ctx_->clientkeyPKCtxInited = true;
+            rc_mbedtls = mbedtls_pk_setup_opaque(&ctx_->clientkeyPKCtx, ctx_->clientKeyHandle);
+            if (MBEDTLS_ERR_PK_FEATURE_UNAVAILABLE == rc_mbedtls) {
+                LogInfo(("Info: mbedtls hasn't supported this key type as opaque yet. Go non-opaque instead..."));
+                go_nonopaque = true;
+                break;
+            } else if (0 != rc_mbedtls) {
+                LogError(("Error: mbedtls_pk_setup_opaque(%d) failed: %d", ctx_->clientKeyHandle, rc_mbedtls));
+                break;
+            }
+
+            /* TLSSocket hasn't supported opaque yet. Configure mbedtls SSL straight. */
+            rc_mbedtls = mbedtls_ssl_conf_own_cert(ctx_->socket->get_ssl_config(),
+                                                   &ctx_->clientCrt,
+                                                   &ctx_->clientkeyPKCtx);
+            if (0 != rc_mbedtls) {
+                LogError(("Error: mbedtls_ssl_conf_own_cert failed: %d", rc_mbedtls));
+                break;
+            }
+
+            go_opaque_ok = true;
+        } while (0);
+
+        /* Client certificate/key contexts are needed by mbedtls transport
+         * session. Keep them. */
+        if (!go_opaque_ok) {
+            ctx_->UninitClientCrtKey();
+        }
+#endif
+
+        /* Go non-opaque */
+        if (go_nonopaque && pCredentialInfo->clientKey && pCredentialInfo->clientKeySize) {
+            rc = ctx_->socket->set_client_cert_key(pCredentialInfo->clientCrt,
+                                                   pCredentialInfo->clientCrtSize,
+                                                   pCredentialInfo->clientKey,
+                                                   pCredentialInfo->clientKeySize);
+            if (rc != 0) {
+                LogError(("Error: configure client certificate/private key into TLSSocket: %d", rc));
+                goto cleanup;
+            }
         }
     }
 
@@ -158,6 +234,11 @@ int32_t Mbed_Tls_Disconnect( NetworkContext_t * pNetworkContext )
     /* Destruct socket */
     ctx_->socket->~TLSSocket();
     ctx_->socket = NULL;
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+    /* Un-initialize client certificate/key */
+    ctx_->UninitClientCrtKey();
+#endif
 
     return 0;
 }

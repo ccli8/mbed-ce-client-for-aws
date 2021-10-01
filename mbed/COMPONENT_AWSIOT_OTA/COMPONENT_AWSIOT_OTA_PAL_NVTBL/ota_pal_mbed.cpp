@@ -899,8 +899,25 @@ static bool prvGetCertificate( const char * pcLabelName,
         LogError( ("kv_get_info: %s failed: %d", kv_label_name, MBED_GET_ERROR_CODE(kv_status)) );
         goto lexit;
     }
-  
-    pucCert = (uint8_t *)malloc(info.size+1);
+
+    /* Resolve confusion with null-terminated string for PEM
+     *
+     * mbedtls API requires PEM be null-terminated string. For this requirement
+     * and consistency across application, all in-ram and in-storage PEM are
+     * resolved to be null-terminated string, size of which will include the '\0'
+     * character.
+     *
+     * Application notes:
+     *
+     * - In provision for PEM, its ending '\0' character is stored and so its size counts
+     *   the character.
+     * - In fetch from storage for PEM, data and size through kv_get()/kv_get_info() will
+     *   include the ending '\0' character. Application usually needn't handle the ending
+     *   '\0' character extra.
+     * - Continuing above, because the PEM fetched from storage has been null-terminated,
+     *   it can pass to mbedtls API straight.
+     */
+    pucCert = (uint8_t *)malloc(info.size/*+1*/);
     if( pucCert == NULL ) {
         LogError( ("memory allocate: %d failed", info.size) );
         goto lexit;
@@ -916,9 +933,9 @@ static bool prvGetCertificate( const char * pcLabelName,
         LogError( ("%s: Expected %d Got %d", kv_label_name, info.size, actual_size) );
         goto lexit;
     }
-    pucCert[actual_size] = 0U;
+    //pucCert[actual_size] = 0U;
     *ppucData = pucCert;
-    *pulDataSize = actual_size + 1U;
+    *pulDataSize = actual_size/* + 1U*/;
     return true;
     
 lexit:

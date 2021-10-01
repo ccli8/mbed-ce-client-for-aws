@@ -59,6 +59,11 @@ extern "C" {
 /* Transport includes. */
 #include "transport_mbed_base.h"
 
+/* PSA includes */
+#if COMPONENT_AWSIOT_PKCS11PSA
+#include "psa/crypto.h"
+#endif
+
 /**
  * @brief Derived NetworkStruct for TLS
  */
@@ -66,19 +71,65 @@ struct TlsNetworkContext : public NetworkContext
 {
     TlsNetworkContext() :
         socket(NULL)
+#if COMPONENT_AWSIOT_PKCS11PSA
+        , clientCrtInited(false)
+        , clientKeyHandle(0)
+        , clientkeyPKCtxInited(false)
+#endif
     {
     }
 
+    ~TlsNetworkContext()
+    {
+#if COMPONENT_AWSIOT_PKCS11PSA
+        UninitClientCrtKey();
+#endif
+    }
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+    void UninitClientCrtKey()
+    {
+        if (clientCrtInited) {
+            mbedtls_x509_crt_free(&clientCrt);
+            clientCrtInited = false;
+        }
+        if (clientKeyHandle) {
+            psa_close_key(clientKeyHandle);
+            clientKeyHandle = 0;
+        }
+        if (clientkeyPKCtxInited) {
+            mbedtls_pk_free(&clientkeyPKCtx);
+            clientkeyPKCtxInited = false;
+        }
+    }
+#endif
+
     uint64_t                socketBlock[(sizeof(TLSSocket) + 7) / 8];
     TLSSocket *             socket;
+#if COMPONENT_AWSIOT_PKCS11PSA
+    /* TLSSocket hasn't supported opaque yet. Keep necessary context for
+     * configuring mbedtls SSL straight */
+    bool                    clientCrtInited;
+    mbedtls_x509_crt        clientCrt;
+    psa_key_id_t            clientKeyHandle;
+    bool                    clientkeyPKCtxInited;
+    mbedtls_pk_context      clientkeyPKCtx;
+#endif
 };
 typedef struct TlsNetworkContext TlsNetworkContext_t;
 
 /* The format for network credentials on this system. */
 typedef struct {
-    const char *rootCA;
-    const char *clientCrt;
-    const char *clientKey;
+    const uint8_t *rootCA;
+    size_t rootCASize;
+    const uint8_t *clientCrt;
+    size_t clientCrtSize;
+#if COMPONENT_AWSIOT_PKCS11PSA
+    /* PSA client key ID */
+    psa_key_id_t clientKeyId;
+#endif
+    const uint8_t *clientKey;
+    size_t clientKeySize;
     
     /* Pointer to a NULL-terminated list of supported protocols,
      * in decreasing preference order. The pointer to the list is

@@ -3,6 +3,23 @@
 
 add_library(mbed-client-for-aws INTERFACE)
 
+if("AWSIOT_PKCS11" IN_LIST MBED_TARGET_LABELS)
+    add_subdirectory(COMPONENT_AWSIOT_PKCS11)
+    add_subdirectory(mbed/COMPONENT_AWSIOT_PKCS11)
+endif()
+
+if("AWSIOT_PKCS11PSA" IN_LIST MBED_TARGET_LABELS)
+    add_subdirectory(COMPONENT_AWSIOT_PKCS11PSA)
+    add_subdirectory(mbed/COMPONENT_AWSIOT_PKCS11PSA)
+endif()
+
+if("AWSIOT_OTA_PAL_NVTBL" IN_LIST MBED_TARGET_LABELS)
+    add_subdirectory(mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_NVTBL)
+endif()
+
+if("AWSIOT_OTA_PAL_PSAFWU" IN_LIST MBED_TARGET_LABELS)
+    add_subdirectory(mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_PSAFWU)
+endif()
 
 target_include_directories(mbed-client-for-aws
     INTERFACE
@@ -20,16 +37,11 @@ target_include_directories(mbed-client-for-aws
         COMPONENT_AWSIOT_MQTT/coreMQTT/source/include
         COMPONENT_AWSIOT_MQTT/coreMQTT/source/interface
         COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/include
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/include
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/dependency/3rdparty/mbedtls_utils
-        COMPONENT_AWSIOT_PKCS11/pkcs11
         COMPONENT_AWSIOT_SIGV4/SigV4-for-AWS-IoT-embedded-sdk/source/include
         mbed/COMPONENT_AWSIOT_MQTT
         mbed/COMPONENT_AWSIOT_OTA
-        mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_NVTBL
         mbed/COMPONENT_AWSIOT_OTA/crypto
         mbed/COMPONENT_AWSIOT_OTA/os
-        mbed/COMPONENT_AWSIOT_PKCS11
         mbed/mbedtls
         mbed/transport/include 
         tinycbor/src
@@ -50,17 +62,11 @@ target_sources(mbed-client-for-aws
         COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_http.c
         COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_interface.c
         COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk/source/ota_mqtt.c
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/core_pkcs11.c
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/core_pki_utils.c
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/dependency/3rdparty/mbedtls_utils/mbedtls_utils.c
-        COMPONENT_AWSIOT_PKCS11/corePKCS11/source/portable/mbedtls/core_pkcs11_mbedtls.c
         backoffAlgorithm/source/backoff_algorithm.c
-        mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_NVTBL/ota_pal_mbed.cpp
         mbed/COMPONENT_AWSIOT_OTA/crypto/iot_crypto.cpp
         mbed/COMPONENT_AWSIOT_OTA/os/ota_os_mbed.cpp
-        mbed/COMPONENT_AWSIOT_PKCS11/COMPONENT_AWSIOT_PKCS11_KVSTORE/core_pkcs11_pal.cpp
-        mbed/mbedtls/threading_alt.cpp
         mbed/clock/src/clock_mbed.cpp
+        mbed/mbedtls/threading_alt.cpp
         mbed/transport/src/transport_mbed_tcp.cpp
         mbed/transport/src/transport_mbed_tls.cpp
         tinycbor/src/cborencoder.c

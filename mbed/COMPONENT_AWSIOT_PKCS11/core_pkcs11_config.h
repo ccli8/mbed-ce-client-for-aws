@@ -1,5 +1,5 @@
 /*
- * AWS IoT Device SDK for Embedded C 202012.01
+ * AWS IoT Device SDK for Embedded C 202108.00
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -18,9 +18,6 @@
  * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * http://aws.amazon.com/freertos
- * http://www.FreeRTOS.org
  */
 
 /**
@@ -61,12 +58,12 @@
 /**
  * @brief Malloc API used by core_pkcs11.h
  */
-#define PKCS11_MALLOC                                      malloc
+#define pkcs11configPKCS11_MALLOC                          malloc
 
 /**
  * @brief Free API used by core_pkcs11.h
  */
-#define PKCS11_FREE                                        free
+#define pkcs11configPKCS11_FREE                            free
 
 /**
  * @brief PKCS #11 default user PIN.
@@ -80,7 +77,7 @@
  * Note: Do not cast this to a pointer! The library calls sizeof to get the length
  * of this string.
  */
-#define configPKCS11_DEFAULT_USER_PIN                      "0000"
+#define pkcs11configPKCS11_DEFAULT_USER_PIN                "0000"
 
 /**
  * @brief Maximum length (in characters) for a PKCS #11 CKA_LABEL
@@ -148,11 +145,31 @@
 #define pkcs11configLABEL_DEVICE_CERTIFICATE_FOR_TLS       "Device_Cert"
 
 /**
+ * @brief The PKCS #11 label for the object to be used for HMAC operations.
+ */
+#define pkcs11configLABEL_HMAC_KEY                         "HMAC_Key"
+
+/**
+ * @brief The PKCS #11 label for the object to be used for CMAC operations.
+ */
+#define pkcs11configLABEL_CMAC_KEY                         "CMAC_Key"
+
+/**
  * @brief The PKCS #11 label for the object to be used for code verification.
  *
  * Used by over-the-air update code to verify an incoming signed image.
  */
 #define pkcs11configLABEL_CODE_VERIFICATION_KEY            "Code_Verify_Key"
+
+/**
+ * @brief The PKCS #11 label for the claim certificate for Fleet Provisioning.
+ */
+#define pkcs11configLABEL_CLAIM_CERTIFICATE                "Claim_Cert"
+
+/**
+ * @brief The PKCS #11 label for the claim private key for Fleet Provisioning.
+ */
+#define pkcs11configLABEL_CLAIM_PRIVATE_KEY                "Claim_Key"
 
 /**
  * @brief The PKCS #11 label for Just-In-Time-Provisioning.

@@ -1,5 +1,5 @@
 corePKCS11/docs/*
-corePKCS11/source/portable/posix/*
-corePKCS11/source/portable/windows/*
+corePKCS11/source/portable/os/freertos_winsim/*
+corePKCS11/source/portable/os/posix/*
 corePKCS11/test/*
 corePKCS11/tools/*

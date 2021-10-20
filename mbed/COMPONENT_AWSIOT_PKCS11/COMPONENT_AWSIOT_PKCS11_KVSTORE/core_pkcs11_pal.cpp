@@ -419,3 +419,31 @@ void PKCS11_PAL_GetObjectValueCleanup( CK_BYTE_PTR pucData,
 }
 
 /*-----------------------------------------------------------*/
+
+CK_RV PKCS11_PAL_DestroyObject( CK_OBJECT_HANDLE xHandle )
+{
+    const char * pcFqKeyName = NULL;
+    CK_BBOOL xIsPrivate = CK_TRUE;
+    CK_RV xResult = CKR_OBJECT_HANDLE_INVALID;
+    int ret = 0;
+
+    xResult = prvHandleToKeyname( xHandle,
+                                  &pcFqKeyName,
+                                  &xIsPrivate );
+
+    if( ( xResult == CKR_OK ) && ( prvKeyExists( pcFqKeyName ) == CKR_OK ) )
+    {
+        auto kv_status = kv_remove( pcFqKeyName );
+
+        if( kv_status != MBED_SUCCESS )
+        {
+            LogError( ( "PKCS #11 PAL failed to destroy object. "
+                    "Could not kv_remove %s.", pcFqKeyName ) );
+            xResult = CKR_FUNCTION_FAILED;
+        }
+    }
+
+    return xResult;
+}
+
+/*-----------------------------------------------------------*/

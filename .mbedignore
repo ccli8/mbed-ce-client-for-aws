@@ -1,5 +1,5 @@
-aws-iot-device-sdk-embedded-c/docs/*
 aws-iot-device-sdk-embedded-c/demos/*
+aws-iot-device-sdk-embedded-c/docs/*
 aws-iot-device-sdk-embedded-c/integration-test/*
 aws-iot-device-sdk-embedded-c/libraries/*
 aws-iot-device-sdk-embedded-c/platform/posix/*
@@ -12,8 +12,8 @@ CMock/examples/*
 CMock/scripts/*
 CMock/test/*
 CMock/vendor/*
-tinycbor/tools/*
 tinycbor/examples/*
-tinycbor/tests/*
 tinycbor/scripts/*
 tinycbor/src/open_memstream.c
+tinycbor/tests/*
+tinycbor/tools/*

@@ -3,4 +3,3 @@ ota-for-aws-iot-embedded-sdk/source/dependency/*
 ota-for-aws-iot-embedded-sdk/source/portable/*
 ota-for-aws-iot-embedded-sdk/test/*
 ota-for-aws-iot-embedded-sdk/tools/*
-ota-for-aws-iot-embedded-sdk/source/ota.c

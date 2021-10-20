@@ -1,7 +1,0 @@
-{
-    "name": "aws-client-pkcs11",
-    "macros": [
-        "MBEDTLS_THREADING_C",
-        "MBEDTLS_THREADING_ALT"
-    ]
-}

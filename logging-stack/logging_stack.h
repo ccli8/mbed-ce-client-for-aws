@@ -1,5 +1,5 @@
 /*
- * coreMQTT v1.1.0
+ * AWS IoT Device SDK for Embedded C 202108.00
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -120,28 +120,28 @@ void aws_iot_log_printf(const char * format, ...);
 #else
     #if LIBRARY_LOG_LEVEL == LOG_DEBUG
         /* All log level messages will logged. */
-        #define LogError( message )    SdkLog( ( "[ERROR] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogWarn( message )     SdkLog( ( "[WARN] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogInfo( message )     SdkLog( ( "[INFO] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogDebug( message )    SdkLog( ( "[DEBUG] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogError( message )    SdkLog( ( "[ERROR] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogWarn( message )     SdkLog( ( "[WARN] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogInfo( message )     SdkLog( ( "[INFO] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogDebug( message )    SdkLog( ( "[DEBUG] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
 
     #elif LIBRARY_LOG_LEVEL == LOG_INFO
         /* Only INFO, WARNING and ERROR messages will be logged. */
-        #define LogError( message )    SdkLog( ( "[ERROR] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogWarn( message )     SdkLog( ( "[WARN] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogInfo( message )     SdkLog( ( "[INFO] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogError( message )    SdkLog( ( "[ERROR] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogWarn( message )     SdkLog( ( "[WARN] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogInfo( message )     SdkLog( ( "[INFO] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
         #define LogDebug( message )
 
     #elif LIBRARY_LOG_LEVEL == LOG_WARN
         /* Only WARNING and ERROR messages will be logged.*/
-        #define LogError( message )    SdkLog( ( "[ERROR] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
-        #define LogWarn( message )     SdkLog( ( "[WARN] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogError( message )    SdkLog( ( "[ERROR] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogWarn( message )     SdkLog( ( "[WARN] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
         #define LogInfo( message )
         #define LogDebug( message )
 
     #elif LIBRARY_LOG_LEVEL == LOG_ERROR
         /* Only ERROR messages will be logged. */
-        #define LogError( message )    SdkLog( ( "[ERROR] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+        #define LogError( message )    SdkLog( ( "[ERROR] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
         #define LogWarn( message )
         #define LogInfo( message )
         #define LogDebug( message )
@@ -167,7 +167,7 @@ void aws_iot_log_printf(const char * format, ...);
  * This macro is only enabled for #LOG_DEBUG level configuration in this
  * logging stack implementation.
  */
-    #define LogDebug( message )    SdkLog( ( "[DEBUG] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+    #define LogDebug( message )    SdkLog( ( "[DEBUG] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
 
 /**
  * @brief Definition of logging interface macro that logs messages at the "Info"
@@ -176,7 +176,7 @@ void aws_iot_log_printf(const char * format, ...);
  * This macro is only enabled for #LOG_DEBUG and #LOG_INFO level configurations
  * in this logging stack implementation.
  */
-    #define LogInfo( message )     SdkLog( ( "[INFO] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+    #define LogInfo( message )     SdkLog( ( "[INFO] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
 
 /**
  * @brief Definition of logging interface macro that logs messages at the "Warning"
@@ -185,7 +185,7 @@ void aws_iot_log_printf(const char * format, ...);
  * This macro is only enabled for #LOG_DEBUG, #LOG_INFO and #LOG_WARN level
  * configurations in this logging stack implementation.
  */
-    #define LogWarn( message )     SdkLog( ( "[WARN] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+    #define LogWarn( message )     SdkLog( ( "[WARN] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
 
 /**
  * @brief Definition of logging interface macro that logs messages at the "Error"
@@ -194,8 +194,8 @@ void aws_iot_log_printf(const char * format, ...);
  * This macro is only enabled for all logging level configurations
  * unless except the #LOG_NONE configuration.
  */
-    #define LogError( message )    SdkLog( ( "[ERROR] "LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
+    #define LogError( message )    SdkLog( ( "[ERROR] " LOG_METADATA_FORMAT, LOG_METADATA_ARGS ) ); SdkLog( message ); SdkLog( ( "\r\n" ) )
 
-#endif /* ifndef DOXYGEN */
+#endif /* ifdef DOXYGEN */
 
 #endif /* ifndef LOGGING_STACK_H_ */

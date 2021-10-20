@@ -1,7 +1,9 @@
 {
     "name": "aws-client",
     "macros": [
-        "MBEDTLS_SHA1_C"
+        "MBEDTLS_SHA1_C",
+        "MBEDTLS_THREADING_C",
+        "MBEDTLS_THREADING_ALT"
     ],
     "config": {
         "log-retarget": {

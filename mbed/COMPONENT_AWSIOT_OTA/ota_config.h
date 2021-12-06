@@ -102,13 +102,17 @@
  *  @note This must be set larger than zero.
  *  @note When larger than one, data blocks can send to OTA PAL out of order. This will break some platform
  *        like Nuvoton's M2354 TF-M, which requires data blocks sent in sequence. Configure to one for
- *        these platforms.
+ *        TF-M platforms.
  *  @note For PSA platform like Nuvoton's M2354 TF-M, psa_aead_decrypt() (for mbedtls_ssl_read()) memory footprint
  *        in SPE is proportional to (otaconfigFILE_BLOCK_SIZE * otaconfigMAX_NUM_BLOCKS_REQUEST). Adjust these
  *        configurations to avoid OOM in SPE.
  *
  */
-#define otaconfigMAX_NUM_BLOCKS_REQUEST         1U //8U
+#ifndef TARGET_TFM
+#define otaconfigMAX_NUM_BLOCKS_REQUEST         4U //8U
+#else
+#define otaconfigMAX_NUM_BLOCKS_REQUEST         1U
+#endif
 
 /**
  * @brief The maximum number of requests allowed to send without a response before we abort.

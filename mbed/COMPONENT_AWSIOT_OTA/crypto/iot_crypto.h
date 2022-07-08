@@ -108,7 +108,7 @@ bool CRYPTO_SignatureVerificationFinal( void * pvContext,
                                         uint8_t * pucSignature,
                                         size_t xSignatureLength );
 
-#if COMPONENT_AWSIOT_PKCS11PSA
+#if COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA
 
 /**
  * @brief Verifies a digital signature computation using the PKCS11 public key label
@@ -125,6 +125,10 @@ bool CRYPTO_SignatureVerificationFinalByPKCS11Label( void * pvContext,
                                                      uint8_t * pucSignature,
                                                      size_t xSignatureLength );
 
+#endif  /* COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA */
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+
 /**
  * @brief Verifies a digital signature computation using the PSA public key ID
  *
@@ -138,7 +142,7 @@ bool CRYPTO_SignatureVerificationFinalByPSAKeyId( void * pvContext,
                                                   uint8_t * pucSignature,
                                                   size_t xSignatureLength );
 
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */
 
 #ifdef __cplusplus
 }

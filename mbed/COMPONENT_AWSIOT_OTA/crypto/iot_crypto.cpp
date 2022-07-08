@@ -51,14 +51,21 @@
 /* Threading mutex implementations for mbedTLS. */
 #include "mbedtls/threading.h"
 
-#if COMPONENT_AWSIOT_PKCS11PSA
+#if COMPONENT_AWSIOT_PKCS11
 /* PKCS#11 includes. */
+#include "core_pkcs11_config.h"
+#include "core_pkcs11.h"
+#include "core_pki_utils.h"
+#endif  /* COMPONENT_AWSIOT_PKCS11 */
+
+#if COMPONENT_AWSIOT_PKCS11PSA
+/* PSA-backed PKCS#11 includes. */
 #include "core_pkcs11_config.h"
 #include "core_pkcs11.h"
 #include "iot_pkcs11_psa_object_management.h"
 #include "iot_pkcs11_psa_input_format.h"
 #include "core_pki_utils.h"
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */
 
 #include "iot_crypto.h"
 
@@ -75,16 +82,6 @@ typedef struct SignatureVerificationState
     mbedtls_sha1_context xSHA1Context;
     mbedtls_sha256_context xSHA256Context;
 
-    /* Verify by signer certificate */
-    const char * pcSignerCertificate;
-    size_t xSignerCertificateLength;
-#if COMPONENT_AWSIOT_PKCS11PSA
-    /* Verify by PKCS11 public key label */
-    const uint8_t * pcPKCS11PublicKeyLabel;
-    size_t xPKCS11PublicKeyLabelLength;
-    /* Verify by PSA public key ID */
-    psa_key_id_t xPSAPublicKeyId;
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
 } SignatureVerificationState_t, * SignatureVerificationStatePtr_t;
 
 /*-----------------------------------------------------------*/
@@ -220,7 +217,7 @@ static bool prvVerifySignatureByCertificate( const char * pcSignerCertificate,
     return result;
 }
 
-#if COMPONENT_AWSIOT_PKCS11PSA
+#if COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA
 
 /**
  * @brief Verifies a cryptographic signature based on the PKCS11
@@ -305,6 +302,18 @@ static bool prvVerifySignatureByPKCS11PublicKeyLabel( const uint8_t * pcPKCS11Pu
         size_t xPKCSSignatureLength = xSignatureLength;
         uint8_t *pucPKCSSignature = (uint8_t *) malloc(xPKCSSignatureLength);
 
+        /* TODO: Refactor PKI_mbedTLSSignatureToPkcs11Signature and related to be consistent among all PKCS11 implementations. */
+#if COMPONENT_AWSIOT_PKCS11
+        /* NOTE: PKI_mbedTLSSignatureToPkcs11Signature/PKI_pkcs11SignatureTombedTLSSignature
+         *       support only ECC P-256. */
+        if (0 != PKI_mbedTLSSignatureToPkcs11Signature(pucPKCSSignature,
+                                                       pucSignature)) {
+            CRYPTO_PRINT( ( "PKI_mbedTLSSignatureToPkcs11Signature failed\r\n" ) );
+            goto cleanup_pkcssig;
+        }
+        xPKCSSignatureLength = pkcs11ECDSA_P256_SIGNATURE_LENGTH;
+#endif  /* COMPONENT_AWSIOT_PKCS11 */
+#if COMPONENT_AWSIOT_PKCS11PSA
         /* NOTE: PKI_mbedTLSSignatureToPkcs11Signature/PKI_pkcs11SignatureTombedTLSSignature
          *       should have enhanced to support beyond ECC P-256. */
         if (0 != PKI_mbedTLSSignatureToPkcs11Signature(pucPKCSSignature,
@@ -314,7 +323,8 @@ static bool prvVerifySignatureByPKCS11PublicKeyLabel( const uint8_t * pcPKCS11Pu
             CRYPTO_PRINT( ( "PKI_mbedTLSSignatureToPkcs11Signature failed\r\n" ) );
             goto cleanup_pkcssig;
         }
-                                
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */
+
         rc_pkcs11 = pxFunctionList->C_Verify(xSession,
                                              pucHash,
                                              xHashLength,
@@ -349,6 +359,10 @@ cleanup2:
 cleanup3:
     return result;
 }
+
+#endif  /* COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA */
+
+#if COMPONENT_AWSIOT_PKCS11PSA
 
 /**
  * @brief Verifies a cryptographic signature based on the PSA
@@ -448,84 +462,40 @@ cleanup2:
     return result;
 }
 
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */
 
 /**
  * @brief Performs signature verification on a cryptographic hash.
+ *
+ * @param [out]     pucHash     Buffer to hold resultant hash
+ * @param [in,out]  xHashLength On input, size in bytes of \p pucHash buffer
+ *                              On output, actual hash size in bytes stored in \p pucHash buffer
  */
-static bool CRYPTO_SignatureVerificationFinalCommon( void * pvContext,
-                                                     uint8_t * pucSignature,
-                                                     size_t xSignatureLength )
+static bool CRYPTO_SignatureVerification_FinishHash( void * pvContext,
+                                                     uint8_t * pucHash,
+                                                     size_t & xHashLength )
 {
     bool result = false;
 
     if( pvContext != NULL )
     {
         SignatureVerificationStatePtr_t pxCtx = ( SignatureVerificationStatePtr_t ) pvContext; /*lint !e9087 Allow casting void* to other types. */
-        uint8_t ucSHA1or256[ cryptoSHA256_DIGEST_BYTES ];                                      /* Reserve enough space for the larger of SHA1 or SHA256 results. */
-        uint8_t * pucHash = NULL;
-        size_t xHashLength = 0;
 
-        if( ( pucSignature != NULL ) &&
-            ( xSignatureLength > 0UL ) )
+        /* Finish the hash */
+        if( cryptoHASH_ALGORITHM_SHA1 == pxCtx->xHashAlgorithm &&
+            xHashLength >= cryptoSHA1_DIGEST_BYTES )
         {
-            /*
-             * Finish the hash
-             */
-            if( cryptoHASH_ALGORITHM_SHA1 == pxCtx->xHashAlgorithm )
-            {
-                ( void ) mbedtls_sha1_finish_ret( &pxCtx->xSHA1Context, ucSHA1or256 );
-                pucHash = ucSHA1or256;
-                xHashLength = cryptoSHA1_DIGEST_BYTES;
-            }
-            else
-            {
-                ( void ) mbedtls_sha256_finish_ret( &pxCtx->xSHA256Context, ucSHA1or256 );
-                pucHash = ucSHA1or256;
-                xHashLength = cryptoSHA256_DIGEST_BYTES;
-            }
-
-            /*
-             * Verify the signature
-             */
-            if (pxCtx->pcSignerCertificate && pxCtx->xSignerCertificateLength) {
-                result = prvVerifySignatureByCertificate( pxCtx->pcSignerCertificate,
-                                                          pxCtx->xSignerCertificateLength,
-                                                          pxCtx->xHashAlgorithm,
-                                                          pucHash,
-                                                          xHashLength,
-                                                          pucSignature,
-                                                          xSignatureLength );
-#if COMPONENT_AWSIOT_PKCS11PSA
-            } else if (pxCtx->pcPKCS11PublicKeyLabel && pxCtx->xPKCS11PublicKeyLabelLength) {
-                result = prvVerifySignatureByPKCS11PublicKeyLabel( pxCtx->pcPKCS11PublicKeyLabel,
-                                                                   pxCtx->xPKCS11PublicKeyLabelLength,
-                                                                   pxCtx->xHashAlgorithm,
-                                                                   pucHash,
-                                                                   xHashLength,
-                                                                   pucSignature,
-                                                                   xSignatureLength );
-            } else if (pxCtx->xPSAPublicKeyId) {
-                result = prvVerifySignatureByPSAPublicKeyID( pxCtx->xPSAPublicKeyId,
-                                                             pxCtx->xHashAlgorithm,
-                                                             pucHash,
-                                                             xHashLength,
-                                                             pucSignature,
-                                                             xSignatureLength );
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
-            } else {
-                result = false;
-            }
+            ( void ) mbedtls_sha1_finish_ret( &pxCtx->xSHA1Context, pucHash );
+            xHashLength = cryptoSHA1_DIGEST_BYTES;
+            result = true;
         }
-        else
+        else if ( cryptoHASH_ALGORITHM_SHA256 == pxCtx->xHashAlgorithm &&
+                  xHashLength >= cryptoSHA256_DIGEST_BYTES )
         {
-            /* Allow function to be called with only the context pointer for cleanup after a failure. */
+            ( void ) mbedtls_sha256_finish_ret( &pxCtx->xSHA256Context, pucHash );
+            xHashLength = cryptoSHA256_DIGEST_BYTES;
+            result = true;
         }
-
-        /*
-         * Clean-up
-         */
-        free( pxCtx );
     }
 
     return result;
@@ -556,7 +526,7 @@ void CRYPTO_Init( void )
                     "psa_crypto_init() failed: ",
                     status);
     }
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */
 }
 
 /**
@@ -580,8 +550,7 @@ bool CRYPTO_SignatureVerificationStart( void ** ppvContext,
 
     if( result == true )
     {
-        /* Clean, zero-initialized context, necessary for resolving which signature
-         * verification approach to go in CRYPTO_SignatureVerificationFinalCommon */
+        /* Clean, zero-initialized context */
         memset(pxCtx, 0x00, sizeof(*pxCtx));
 
         *ppvContext = pxCtx;
@@ -642,17 +611,43 @@ bool CRYPTO_SignatureVerificationFinal( void * pvContext,
                                         uint8_t * pucSignature,
                                         size_t xSignatureLength )
 {
-    if (pvContext != NULL) {
+    if (pvContext != NULL)
+    {
         SignatureVerificationStatePtr_t pxCtx = (SignatureVerificationStatePtr_t) pvContext;
-        pxCtx->pcSignerCertificate = pcSignerCertificate;
-        pxCtx->xSignerCertificateLength = xSignerCertificateLength;
-        return CRYPTO_SignatureVerificationFinalCommon(pvContext, pucSignature, xSignatureLength);
-    } else {
+
+        /* Reserve enough space for the larger of SHA1 or SHA256 results. */
+        uint8_t ucSHA1or256[ cryptoSHA256_DIGEST_BYTES ];
+        size_t xHashLength = cryptoSHA256_DIGEST_BYTES;
+
+        bool result = CRYPTO_SignatureVerification_FinishHash( pxCtx, ucSHA1or256, xHashLength );
+
+        if ( result )
+        {
+            result = ( pucSignature != NULL ) && ( xSignatureLength > 0UL );
+        }
+
+        if ( result && pcSignerCertificate && xSignerCertificateLength )
+        {
+            result = prvVerifySignatureByCertificate( pcSignerCertificate,
+                                                      xSignerCertificateLength,
+                                                      pxCtx->xHashAlgorithm,
+                                                      ucSHA1or256,
+                                                      xHashLength,
+                                                      pucSignature,
+                                                      xSignatureLength );
+        }
+
+        /* Clean-up */
+        free( pxCtx );
+
+        return result;
+    } else
+    {
         return false;
     }
 }
 
-#if COMPONENT_AWSIOT_PKCS11PSA
+#if COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA
 
 /**
  * @brief Variant of CRYPTO_SignatureVerificationFinal, using PKCS11 public key label.
@@ -663,15 +658,45 @@ bool CRYPTO_SignatureVerificationFinalByPKCS11Label( void * pvContext,
                                                      uint8_t * pucSignature,
                                                      size_t xSignatureLength )
 {
-    if (pvContext != NULL) {
+    if (pvContext != NULL)
+    {
         SignatureVerificationStatePtr_t pxCtx = (SignatureVerificationStatePtr_t) pvContext;
-        pxCtx->pcPKCS11PublicKeyLabel = pcPKCS11PublicKeyLabel;
-        pxCtx->xPKCS11PublicKeyLabelLength = xPKCS11PublicKeyLabelLength;
-        return CRYPTO_SignatureVerificationFinalCommon(pvContext, pucSignature, xSignatureLength);
-    } else {
+
+        /* Reserve enough space for the larger of SHA1 or SHA256 results. */
+        uint8_t ucSHA1or256[ cryptoSHA256_DIGEST_BYTES ];
+        size_t xHashLength = cryptoSHA256_DIGEST_BYTES;
+
+        bool result = CRYPTO_SignatureVerification_FinishHash( pxCtx, ucSHA1or256, xHashLength );
+
+        if ( result )
+        {
+            result = ( pucSignature != NULL ) && ( xSignatureLength > 0UL );
+        }
+
+        if ( result && pcPKCS11PublicKeyLabel && xPKCS11PublicKeyLabelLength )
+        {
+            result = prvVerifySignatureByPKCS11PublicKeyLabel( pcPKCS11PublicKeyLabel,
+                                                               xPKCS11PublicKeyLabelLength,
+                                                               pxCtx->xHashAlgorithm,
+                                                               ucSHA1or256,
+                                                               xHashLength,
+                                                               pucSignature,
+                                                               xSignatureLength );
+        }
+
+        /* Clean-up */
+        free( pxCtx );
+
+        return result;
+    } else
+    {
         return false;
     }
 }
+
+#endif  /* COMPONENT_AWSIOT_PKCS11 || COMPONENT_AWSIOT_PKCS11PSA */
+
+#if COMPONENT_AWSIOT_PKCS11PSA
 
 /**
  * @brief Variant of CRYPTO_SignatureVerificationFinal, using PSA public key ID.
@@ -681,13 +706,39 @@ bool CRYPTO_SignatureVerificationFinalByPSAKeyId( void * pvContext,
                                                   uint8_t * pucSignature,
                                                   size_t xSignatureLength )
 {
-    if (pvContext != NULL) {
+    if (pvContext != NULL)
+    {
         SignatureVerificationStatePtr_t pxCtx = (SignatureVerificationStatePtr_t) pvContext;
-        pxCtx->xPSAPublicKeyId = xPSAPublicKeyId;
-        return CRYPTO_SignatureVerificationFinalCommon(pvContext, pucSignature, xSignatureLength);
-    } else {
+
+        /* Reserve enough space for the larger of SHA1 or SHA256 results. */
+        uint8_t ucSHA1or256[ cryptoSHA256_DIGEST_BYTES ];
+        size_t xHashLength = cryptoSHA256_DIGEST_BYTES;
+
+        bool result = CRYPTO_SignatureVerification_FinishHash( pxCtx, ucSHA1or256, xHashLength );
+
+        if ( result )
+        {
+            result = ( pucSignature != NULL ) && ( xSignatureLength > 0UL );
+        }
+
+        if ( result && xPSAPublicKeyId )
+        {
+            result = prvVerifySignatureByPSAPublicKeyID( xPSAPublicKeyId,
+                                                         pxCtx->xHashAlgorithm,
+                                                         ucSHA1or256,
+                                                         xHashLength,
+                                                         pucSignature,
+                                                         xSignatureLength );
+        }
+
+        /* Clean-up */
+        free( pxCtx );
+
+        return result;
+    } else
+    {
         return false;
     }
 }
 
-#endif  /* #if COMPONENT_AWSIOT_PKCS11PSA */
+#endif  /* COMPONENT_AWSIOT_PKCS11PSA */

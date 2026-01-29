@@ -3,12 +3,12 @@
     "config": {
         "provide-default-secondary-blockdevice": {
             "help": "Provide default get_secondary_bd() implementation for MCUboot flash map backend.",
-            "options": [true, false],
+            "accepted_values": [true, false, null],
             "value": null
         },
         "default-secondary-blockdevice-type": {
             "help": "Secondary block device type in default get_secondary_bd() implementation above.",
-            "options": ["FLASHIAP", "SPIF", "NUSD", "default"],
+            "accepted_values": ["FLASHIAP", "SPIF", "NUSD", "default", null],
             "value": null
         }
     }

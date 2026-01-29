@@ -1,7 +1,7 @@
 # Copyright (c) 2020 ARM Limited. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-add_library(mbed-client-for-aws INTERFACE)
+add_library(mbed-ce-client-for-aws STATIC EXCLUDE_FROM_ALL)
 
 if("AWSIOT_PKCS11" IN_LIST MBED_TARGET_LABELS)
     add_subdirectory(COMPONENT_AWSIOT_PKCS11)
@@ -25,8 +25,8 @@ if("AWSIOT_OTA_PAL_PSAFWU" IN_LIST MBED_TARGET_LABELS)
     add_subdirectory(mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_PSAFWU)
 endif()
 
-target_include_directories(mbed-client-for-aws
-    INTERFACE
+target_include_directories(mbed-ce-client-for-aws
+    PUBLIC
         .
         backoffAlgorithm/source/include
         CMock/src
@@ -53,8 +53,8 @@ target_include_directories(mbed-client-for-aws
         aws-iot-device-sdk-embedded-C/platform/include
 )
 
-target_sources(mbed-client-for-aws
-    INTERFACE
+target_sources(mbed-ce-client-for-aws
+    PRIVATE
         COMPONENT_AWSIOT_JOBS/jobs-for-aws-iot-embedded-sdk/source/jobs.c
         COMPONENT_AWSIOT_JSON/coreJSON/source/core_json.c
         COMPONENT_AWSIOT_MQTT/coreMQTT/source/core_mqtt.c
@@ -82,3 +82,20 @@ target_sources(mbed-client-for-aws
         tinycbor/src/cborvalidation.c
 )
 
+target_link_libraries(mbed-ce-client-for-aws
+    PUBLIC
+        mbed-core-flags
+        mbed-mbedtls
+        mbed-netsocket-api
+)
+
+target_compile_definitions(mbed-mbedtls
+    PUBLIC
+        "MBEDTLS_THREADING_C"
+        "MBEDTLS_THREADING_ALT"
+)
+
+target_link_libraries(mbed-mbedtls
+    PUBLIC
+        mbed-ce-client-for-aws
+)

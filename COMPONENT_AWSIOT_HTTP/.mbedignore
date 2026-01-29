@@ -1,5 +1,0 @@
-coreHTTP/docs/*
-coreHTTP/test/*
-coreHTTP/tools/*
-http-parser/bench.c
-http-parser/test.c

@@ -45,7 +45,7 @@
 /* Mbed includes */
 #include "mbed.h"
 #include "mbed_trace.h"
-#include "kvstore_global_api.h"
+#include "kvstore_global_api/kvstore_global_api.h"
 
 /* MCUboot includes */
 #include "bootutil/bootutil.h"

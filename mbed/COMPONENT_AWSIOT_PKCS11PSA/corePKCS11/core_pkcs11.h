@@ -30,7 +30,7 @@
 
 #if __MBED__
 #include "psa/crypto.h"
-#include "platform/mbed_version.h"
+#include "mbed_version.h"
 /* Compatible for Mbed TF-M upgrade from 1.3 to 1.4:
  *
  * crypto_compat_depr.h: Copied from psa/crypto_compat.h prior to Mbed OS 6.15 (TF-M 1.4)

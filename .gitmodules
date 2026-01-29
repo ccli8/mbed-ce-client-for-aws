@@ -1,0 +1,51 @@
+[submodule "aws-iot-device-sdk-embedded-C"]
+	path = aws-iot-device-sdk-embedded-C
+	url = https://github.com/aws/aws-iot-device-sdk-embedded-C
+[submodule "backoffAlgorithm"]
+	path = backoffAlgorithm
+	url = https://github.com/FreeRTOS/backoffAlgorithm
+[submodule "CMock"]
+	path = CMock
+	url = https://github.com/ThrowTheSwitch/CMock
+[submodule "COMPONENT_AWSIOT_DEVICEDEFENDER/device-defender-for-aws-iot-embedded-sdk"]
+	path = COMPONENT_AWSIOT_DEVICEDEFENDER/device-defender-for-aws-iot-embedded-sdk
+	url = https://github.com/aws/device-defender-for-aws-iot-embedded-sdk
+[submodule "COMPONENT_AWSIOT_DEVICESHADOW/device-shadow-for-aws-iot-embedded-sdk"]
+	path = COMPONENT_AWSIOT_DEVICESHADOW/device-shadow-for-aws-iot-embedded-sdk
+	url = https://github.com/aws/device-shadow-for-aws-iot-embedded-sdk
+[submodule "COMPONENT_AWSIOT_FLEETPROVISIONING/Fleet-Provisioning-for-AWS-IoT-embedded-sdk"]
+	path = COMPONENT_AWSIOT_FLEETPROVISIONING/Fleet-Provisioning-for-AWS-IoT-embedded-sdk
+	url = https://github.com/aws/Fleet-Provisioning-for-AWS-IoT-embedded-sdk
+[submodule "COMPONENT_AWSIOT_HTTP/coreHTTP"]
+	path = COMPONENT_AWSIOT_HTTP/coreHTTP
+	url = https://github.com/FreeRTOS/coreHTTP.git
+[submodule "COMPONENT_AWSIOT_HTTP/http_parser"]
+	path = COMPONENT_AWSIOT_HTTP/http_parser
+	url = https://github.com/nodejs/http-parser.git
+[submodule "COMPONENT_AWSIOT_JOBS/jobs-for-aws-iot-embedded-sdk"]
+	path = COMPONENT_AWSIOT_JOBS/jobs-for-aws-iot-embedded-sdk
+	url = https://github.com/aws/jobs-for-aws-iot-embedded-sdk
+[submodule "COMPONENT_AWSIOT_JSON/coreJSON"]
+	path = COMPONENT_AWSIOT_JSON/coreJSON
+	url = https://github.com/FreeRTOS/coreJSON
+[submodule "COMPONENT_AWSIOT_MQTT/coreMQTT"]
+	path = COMPONENT_AWSIOT_MQTT/coreMQTT
+	url = https://github.com/FreeRTOS/coreMQTT
+[submodule "COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk"]
+	path = COMPONENT_AWSIOT_OTA/ota-for-aws-iot-embedded-sdk
+	url = https://github.com/aws/ota-for-aws-iot-embedded-sdk
+[submodule "COMPONENT_AWSIOT_PKCS11/corePKCS11"]
+	path = COMPONENT_AWSIOT_PKCS11/corePKCS11
+	url = https://github.com/FreeRTOS/corePKCS11
+[submodule "COMPONENT_AWSIOT_PKCS11/pkcs11"]
+	path = COMPONENT_AWSIOT_PKCS11/pkcs11
+	url = https://github.com/amazon-freertos/pkcs11
+[submodule "COMPONENT_AWSIOT_SIGV4/SigV4-for-AWS-IoT-embedded-sdk"]
+	path = COMPONENT_AWSIOT_SIGV4/SigV4-for-AWS-IoT-embedded-sdk
+	url = https://github.com/aws/SigV4-for-AWS-IoT-embedded-sdk
+[submodule "mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_MCUBOOT/mcuboot"]
+	path = mbed/COMPONENT_AWSIOT_OTA/COMPONENT_AWSIOT_OTA_PAL_MCUBOOT/mcuboot
+	url = https://github.com/mcu-tools/mcuboot
+[submodule "tinycbor"]
+	path = tinycbor
+	url = https://github.com/ARMmbed/tinycbor.git
